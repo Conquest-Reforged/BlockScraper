@@ -1,0 +1,2 @@
+# BlockScraper
+dynmap blockscraper
