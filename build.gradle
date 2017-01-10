@@ -1,0 +1,22 @@
+buildscript {
+    repositories {
+        jcenter();
+    }
+}
+
+apply plugin: 'groovy'
+
+group 'me.dags'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile 'com.github.webbukkit:DynmapCoreAPI:2.3'
+}
