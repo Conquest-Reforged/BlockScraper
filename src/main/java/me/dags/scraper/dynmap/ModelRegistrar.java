@@ -49,8 +49,10 @@ public class ModelRegistrar {
     }
 
     private static void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model) {
+        SideUtil counter = new SideUtil();
+
         for (Map.Entry<String, String> entry : model.textures.entrySet()) {
-            BlockSide side = side(entry.getKey());
+            BlockSide side = SideUtil.fromName(entry.getKey());
             String icon = entry.getValue();
 
             if (icon.startsWith("#")) {
@@ -62,26 +64,34 @@ public class ModelRegistrar {
                 TextureFile textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
                 textureRecord.setSideTexture(textureFile, side);
 
+                counter.recordSide(side, textureFile);
                 AssetManager.getInstance().extractToDir(getTextureDir(), texture);
+            }
+        }
+
+        if (counter.hasFallback()) {
+            TextureFile fallback = counter.getFallbackTexture();
+            for (BlockSide side : counter.getMissingSides()) {
+                textureRecord.setSideTexture(fallback, side);
             }
         }
     }
 
     private static void registerShapes(CuboidBlockModel blockModel, Model model) {
         for (Element element : model.elements) {
-            Cuboid.Builder builder = new Cuboid.Builder();
-
-            builder.min(element.x1, element.y1, element.z1);
-            builder.max(element.x2, element.y2, element.z2);
-
-            for (String face : element.faces) {
-                BlockSide side = side(face);
-                if (side != null) {
-                    builder.side(side);
-                }
-            }
-
-            builder.build().addToModel(blockModel);
+            double x1 = element.x1 / 16D;
+            double y1 = element.y1 / 16D;
+            double z1 = element.z1 / 16D;
+            double x2 = element.x2 / 16D;
+            double y2 = element.y2 / 16D;
+            double z2 = element.z2 / 16D;
+            double xmin = Math.min(x1, x2);
+            double xmax = Math.max(x1, x2);
+            double ymin = Math.min(y1, y2);
+            double ymax = Math.max(y1, y2);
+            double zmin = Math.min(z1, z2);
+            double zmax = Math.max(z1, z2);
+            blockModel.addCuboid(xmin, ymin, zmin, xmax, ymax, zmax, null);
         }
     }
 
@@ -91,28 +101,5 @@ public class ModelRegistrar {
             return textureDir = new File(root, "dynmap/texturepacks/standard");
         }
         return textureDir;
-    }
-
-    private static BlockSide side(String in) {
-        switch (in) {
-            case "down":
-            case "bottom":
-                return BlockSide.BOTTOM;
-            case "up":
-            case "top":
-                return BlockSide.TOP;
-            case "north":
-                return BlockSide.NORTH;
-            case "south":
-                return BlockSide.SOUTH;
-            case "east":
-                return BlockSide.EAST;
-            case "west":
-                return BlockSide.WEST;
-            case "side":
-            case "sides":
-                return BlockSide.ALLSIDES;
-        }
-        return BlockSide.ALLSIDES;
     }
 }
