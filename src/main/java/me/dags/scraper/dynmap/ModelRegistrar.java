@@ -3,6 +3,7 @@ package me.dags.scraper.dynmap;
 import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.model.Element;
 import me.dags.scraper.asset.model.Model;
+import me.dags.scraper.asset.model.ModelType;
 import me.dags.scraper.asset.util.ResourcePath;
 import org.dynmap.modsupport.*;
 

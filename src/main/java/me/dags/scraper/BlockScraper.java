@@ -4,9 +4,9 @@ import me.dags.scraper.asset.AssetContainer;
 import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.blockstate.BlockState;
 import me.dags.scraper.asset.model.Model;
+import me.dags.scraper.asset.model.ModelType;
 import me.dags.scraper.asset.util.ResourcePath;
 import me.dags.scraper.dynmap.ModelRegistrar;
-import me.dags.scraper.dynmap.ModelType;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
@@ -40,7 +40,7 @@ public class BlockScraper {
 
         // Clear references to ModContainers & cached resources
         AssetManager.getInstance().clear();
-        
+
         // Tell dynmap we're done registering models/textures
         ModelRegistrar.getInstance().publish();
 

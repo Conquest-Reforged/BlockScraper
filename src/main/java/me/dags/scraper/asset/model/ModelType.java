@@ -1,4 +1,4 @@
-package me.dags.scraper.dynmap;
+package me.dags.scraper.asset.model;
 
 /**
  * @author dags <dags@dags.me>

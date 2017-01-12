@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.model.Model;
+import me.dags.scraper.asset.model.ModelType;
 import me.dags.scraper.asset.util.ResourcePath;
-import me.dags.scraper.dynmap.ModelType;
 
 import java.util.HashMap;
 import java.util.Map;
