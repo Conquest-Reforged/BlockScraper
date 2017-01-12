@@ -26,27 +26,32 @@ public class Model {
         JsonElement textures = object.getAsJsonObject("textures");
         JsonElement elements = object.getAsJsonArray("elements");
 
-        Model model;
+        Model parentModel;
         if (parent != null) {
             ResourcePath parentPath = new ResourcePath(parent.getAsString(), "models/block", ".json");
             JsonObject parentObj = AssetManager.getInstance().getJson(parentPath);
-            model = new Model(parentObj);
+            parentModel = new Model(parentObj);
         } else {
-            model = new Model();
+            parentModel = new Model();
         }
+
+        this.textures.putAll(parentModel.textures);
+        this.elements.addAll(parentModel.elements);
 
         if (textures != null && textures.isJsonObject()) {
             for (Map.Entry<String, JsonElement> texture : textures.getAsJsonObject().entrySet()) {
-                model.textures.put(texture.getKey(), texture.getValue().getAsString());
+                this.textures.put(texture.getKey(), texture.getValue().getAsString());
             }
         }
 
         if (elements != null && elements.isJsonArray()) {
-            model.elements.clear();
+            this.elements.clear();
             for (JsonElement element : elements.getAsJsonArray()) {
                 if (element.isJsonObject()) {
                     Element el = new Element(element.getAsJsonObject());
-                    model.elements.add(el);
+                    if (el.isValid()) {
+                        this.elements.add(el);
+                    }
                 }
             }
         }

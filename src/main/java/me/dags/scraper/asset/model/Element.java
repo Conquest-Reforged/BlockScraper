@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class Element {
 
     public final int x1, y1, z1;
     public final int x2, y2, z2;
-    public final List<String> faces = new ArrayList<>();
+    public final List<String> faces;
 
     private Element(int x1, int y1, int z1, int x2, int y2, int z2, List<String> faces) {
         this.x1 = Math.min(x1, x2);
@@ -24,7 +25,7 @@ public class Element {
         this.x2 = Math.max(x1, x2);
         this.y2 = Math.max(y1, y2);
         this.z2 = Math.max(z1, z2);
-        this.faces.addAll(faces);
+        this.faces = new ArrayList<>(faces);
     }
 
     public Element(JsonObject json) {
@@ -42,23 +43,37 @@ public class Element {
             z2 = to.get(2).getAsInt();
 
             if (faces != null) {
+                List<String> list = new ArrayList<>();
                 for (Map.Entry<String, JsonElement> face : faces.entrySet()) {
-                    this.faces.add(face.getKey());
+                    list.add(face.getKey());
                 }
+                this.faces = list;
+            } else {
+                this.faces = Collections.emptyList();
             }
         } else {
-            throw new UnsupportedOperationException("Invalid Element! from:" + from + " to:" + to + " faces:" + faces);
+            this.x1 = 0;
+            this.y1 = 0;
+            this.z1 = 0;
+            this.x2 = 0;
+            this.y2 = 0;
+            this.z2 = 0;
+            this.faces = Collections.emptyList();
         }
+    }
+
+    public boolean isValid() {
+        return !(x1 == 0 && y1 == 0 && z1 == 0 && x2 == 0 && y2 == 0 && z2 == 0);
     }
 
     public Element rotateX(int degrees) {
         double rads = Math.toRadians(degrees);
         int yOff = degrees > 89 && degrees < 271 ? 16 : 0;
         int zOff = degrees > 179 && degrees < 361 ? 16 : 0;
-        int y1 = (int) Math.round(this.y1 * Math.cos(rads) - this.z1 * Math.sin(rads)) + yOff;
-        int z1 = (int) Math.round(this.z1 * Math.cos(rads) + this.y1 * Math.sin(rads)) + zOff;
-        int y2 = (int) Math.round(this.y2 * Math.cos(rads) - this.z2 * Math.sin(rads)) + yOff;
-        int z2 = (int) Math.round(this.z2 * Math.cos(rads) + this.y2 * Math.sin(rads)) + zOff;
+        int z1 = (int) Math.round(this.z1 * Math.cos(rads) - this.y1 * Math.sin(rads)) + zOff;
+        int y1 = (int) Math.round(this.y1 * Math.cos(rads) + this.z1 * Math.sin(rads)) + yOff;
+        int z2 = (int) Math.round(this.z2 * Math.cos(rads) - this.y2 * Math.sin(rads)) + zOff;
+        int y2 = (int) Math.round(this.y2 * Math.cos(rads) + this.z2 * Math.sin(rads)) + yOff;
         return new Element(x1, y1, z1, x2, y2, z2, faces);
     }
 

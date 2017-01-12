@@ -5,10 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.dags.scraper.asset.util.ResourcePath;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,25 +81,23 @@ public final class AssetManager {
         }
     }
 
-    public InputStream getResource(ResourcePath path) throws IOException {
+    public InputStream getResource(ResourcePath path) throws FileNotFoundException {
         InputStream inputStream = null;
         for (int i = containers.size() - 1; inputStream == null && i > -1; i--) {
             try {
                 AssetContainer container = containers.get(i);
                 inputStream = container.getInputStream(path);
-            } catch (IOException e) {
-                try {
-                    if (inputStream != null) {
-                        inputStream.close();
-                    }
-                } catch (IOException e1) {}
-            }
+            } catch (IOException e) {}
         }
 
         if (inputStream != null) {
             return inputStream;
         }
 
-        return defaultContainer.getInputStream(path);
+        try {
+            return defaultContainer.getInputStream(path);
+        } catch (IOException e) {
+            throw new FileNotFoundException(path.toString());
+        }
     }
 }

@@ -8,6 +8,7 @@ import me.dags.scraper.asset.util.ResourcePath;
 import org.dynmap.modsupport.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -144,9 +145,13 @@ public final class ModelRegistrar {
 
             if (icon != null) {
                 ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
-                TextureFile textureFile = getTextureFile(definition, texture);
-                textureRecord.setSideTexture(textureFile, side);
+                TextureFile textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
 
+                if (textureFile == null) {
+                    throw new UnsupportedOperationException("Missing Asset: " + texture.getFilePath());
+                }
+
+                textureRecord.setSideTexture(textureFile, side);
                 counter.recordSide(side, textureFile);
 
                 if (textureDir != null) {
@@ -164,11 +169,13 @@ public final class ModelRegistrar {
     }
 
     private TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
-        TextureFile file = textureFileCache.get(texture);
-        if (file == null) {
-            file = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
-            textureFileCache.put(texture, file);
+        TextureFile textureFile = textureFileCache.get(texture);
+        if (textureFile == null) {
+            textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
+            if (textureFile != null) {
+                textureFileCache.put(texture, textureFile);
+            }
         }
-        return file;
+        return textureFile;
     }
 }

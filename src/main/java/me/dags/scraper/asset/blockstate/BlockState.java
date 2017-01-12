@@ -52,19 +52,18 @@ public class BlockState {
         if (variant != null) {
             ResourcePath modelPath = new ResourcePath(variant.model, "models/block", ".json");
             Model model = Model.forPath(modelPath);
-            if (!variant.axis.isEmpty()) {
-                if (variant.axis.equals("x")) {
-                    return model.rotateX(variant.rotation);
-                }
-                if (variant.axis.equals("y")) {
-                    return model.rotateY(variant.rotation);
-                }
-                if (variant.axis.equals("z")) {
-                    return model.rotateZ(variant.rotation);
-                }
-            } else {
-                return model;
+
+            if (variant.x != 0) {
+                model = model.rotateX(variant.x);
             }
+            if (variant.y != 0) {
+                model = model.rotateY(variant.y);
+            }
+            if (variant.z != 0) {
+                model = model.rotateZ(variant.z);
+            }
+
+            return model;
         }
         return null;
     }

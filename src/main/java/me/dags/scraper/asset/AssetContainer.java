@@ -3,10 +3,7 @@ package me.dags.scraper.asset;
 import me.dags.scraper.asset.util.ResourcePath;
 import me.dags.scraper.asset.util.ZipStream;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,7 +34,8 @@ public class AssetContainer {
             if (entry != null) {
                 return new ZipStream(zipFile, entry);
             }
-            return null;
+            zipFile.close();
+            throw new FileNotFoundException(resourcePath.toString());
         }
     }
 

@@ -106,7 +106,9 @@ public class BlockScraper {
             String query = StateMapper.getBlockstateStateQuery(variant);
 
             Model model = blockState.getModel(query);
-            ModelRegistrar.getInstance().register(domain, name, meta, blockState.getModelType(), model);
+            if (model != null) {
+                ModelRegistrar.getInstance().register(domain, name, meta, blockState.getModelType(), model);
+            }
         } catch (Throwable t) {
             System.out.println("Error registering variant: " + variant);
             if (debug) {
