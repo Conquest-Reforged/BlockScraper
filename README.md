@@ -9,7 +9,7 @@ It will automatically attempt to build a dynmap model definition from a
  given blockstate's model data.
 
 Alternatively, a preset model can be specified by adding the field
- `"dyn_model": "<preset>",` to the blockstae json.
+ `"dyn_model": "<preset>",` to the blockstate json.
 
 ### Available Presets:
 The following presets assume the mod block shares the same metadata as
