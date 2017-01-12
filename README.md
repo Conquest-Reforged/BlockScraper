@@ -1,2 +1,3 @@
 # BlockScraper
-dynmap blockscraper
+
+Generate dynmap renderdata for mod blocks
