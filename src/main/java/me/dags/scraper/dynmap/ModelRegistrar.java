@@ -13,29 +13,37 @@ import java.util.Map;
 /**
  * @author dags <dags@dags.me>
  */
-public class ModelRegistrar {
+public final class ModelRegistrar {
 
-    private static Map<ResourcePath, TextureFile> textureFileCache = new HashMap<>();
-    private static Map<String, ModTextureDefinition> definitions = new HashMap<>();
-    private static File textureDir;
+    private static final ModelRegistrar instance = new ModelRegistrar();
 
-    public static void setMCDir(File dir) {
+    private final Map<ResourcePath, TextureFile> textureFileCache = new HashMap<>();
+    private final Map<String, ModTextureDefinition> definitions = new HashMap<>();
+    private File textureDir;
+
+    private ModelRegistrar(){}
+
+    public static ModelRegistrar getInstance() {
+        return instance;
+    }
+
+    public void setMCDir(File dir) {
         textureDir = new File(dir, "dynmap/texturepacks/standard");
     }
 
-    public static void publish() {
+    public void publish() {
         for (ModTextureDefinition definition : definitions.values()) {
             definition.getModelDefinition().publishDefinition();
             definition.publishDefinition();
         }
     }
 
-    public static void clear() {
+    public void clear() {
         definitions.clear();
         textureFileCache.clear();
     }
 
-    public static void register(String domain, String name, int meta, ModelType type, Model model) {
+    public void register(String domain, String name, int meta, ModelType type, Model model) {
         switch (type) {
             case DOOR:
                 registerDoor(domain, name, model);
@@ -56,7 +64,7 @@ public class ModelRegistrar {
         }
     }
 
-    private static void registerCustom(String domain, String name, int meta, Model model) {
+    private void registerCustom(String domain, String name, int meta, Model model) {
         ModTextureDefinition definition = getDefinition(domain);
 
         CuboidBlockModel blockModel = definition.getModelDefinition().addCuboidModel(name);
@@ -68,35 +76,35 @@ public class ModelRegistrar {
         textureRecord.setMetaValue(meta);
     }
 
-    private static void registerDoor(String domain, String name, Model model) {
+    private void registerDoor(String domain, String name, Model model) {
         ModTextureDefinition definition = getDefinition(domain);
         definition.getModelDefinition().addDoorModel(name);
         BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
         registerTextures(definition, textureRecord, model, true);
     }
 
-    private static void registerWallFence(String domain, String name, Model model, WallFenceBlockModel.FenceType type) {
+    private void registerWallFence(String domain, String name, Model model, WallFenceBlockModel.FenceType type) {
         ModTextureDefinition definition = getDefinition(domain);
         definition.getModelDefinition().addWallFenceModel(name, type);
         BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
         registerTextures(definition, textureRecord, model, true);
     }
 
-    private static void registerPane(String domain, String name, Model model) {
+    private void registerPane(String domain, String name, Model model) {
         ModTextureDefinition definition = getDefinition(domain);
         definition.getModelDefinition().addPaneModel(name);
         BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
         registerTextures(definition, textureRecord, model, true);
     }
 
-    private static void registerPlant(String domain, String name, Model model) {
+    private void registerPlant(String domain, String name, Model model) {
         ModTextureDefinition definition = getDefinition(domain);
         definition.getModelDefinition().addPlantModel(name);
         BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
         registerTextures(definition, textureRecord, model, false);
     }
 
-    private static ModTextureDefinition getDefinition(String domain) {
+    private ModTextureDefinition getDefinition(String domain) {
         ModTextureDefinition definition = definitions.get(domain);
         if (definition == null) {
             definitions.put(domain, definition = ModSupportAPI.getAPI().getModTextureDefinition(domain, "1.0"));
@@ -104,7 +112,7 @@ public class ModelRegistrar {
         return definition;
     }
 
-    private static void constructCubeModel(CuboidBlockModel blockModel, Model model) {
+    private void constructCubeModel(CuboidBlockModel blockModel, Model model) {
         for (Element element : model.getElements()) {
             double x1 = element.x1 / 16D;
             double y1 = element.y1 / 16D;
@@ -122,7 +130,7 @@ public class ModelRegistrar {
         }
     }
 
-    private static void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model, boolean useFallback) {
+    private void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model, boolean useFallback) {
         SideUtil counter = new SideUtil();
 
         for (Map.Entry<String, String> entry : model.getTextures()) {
@@ -154,7 +162,7 @@ public class ModelRegistrar {
         }
     }
 
-    private static TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
+    private TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
         TextureFile file = textureFileCache.get(texture);
         if (file == null) {
             file = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());

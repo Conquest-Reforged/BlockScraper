@@ -38,14 +38,14 @@ public class BlockScraper {
         // Loop through block registry and attempt to generate dynmodels for them
         registerBlocks();
 
-        // Tell dynmap we're done registering models/textures
-        ModelRegistrar.publish();
-
         // Clear references to ModContainers & cached resources
         AssetManager.getInstance().clear();
+        
+        // Tell dynmap we're done registering models/textures
+        ModelRegistrar.getInstance().publish();
 
         // Clear cached ModTextureDefinition and TextureFile references
-        ModelRegistrar.clear();
+        ModelRegistrar.getInstance().clear();
     }
 
     private void findAssets() {
@@ -106,7 +106,7 @@ public class BlockScraper {
             String query = StateMapper.getBlockstateStateQuery(variant);
 
             Model model = blockState.getModel(query);
-            ModelRegistrar.register(domain, name, meta, blockState.getModelType(), model);
+            ModelRegistrar.getInstance().register(domain, name, meta, blockState.getModelType(), model);
         } catch (Throwable t) {
             System.out.println("Error registering variant: " + variant);
             if (debug) {
