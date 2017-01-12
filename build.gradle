@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 group 'me.dags'
-version '1.0-SNAPSHOT'
+version '0.1-SNAPSHOT-mc1.10.2'
 
 sourceCompatibility = targetCompatibility = "1.7"
 compileJava {
