@@ -18,6 +18,8 @@ public enum ModelType {
                 return DOOR;
             case "fence":
                 return FENCE;
+            case "pane":
+                return PANE;
             case "plant":
                 return PLANT;
             case "wall":
