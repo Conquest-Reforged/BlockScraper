@@ -30,7 +30,7 @@ public class BlockScraper {
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
         // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
-        ModelRegistrar.setMCDir(Loader.instance().getConfigDir().getParentFile());
+        ModelRegistrar.getInstance().setMCDir(Loader.instance().getConfigDir().getParentFile());
 
         // Scan for ModContainers and add to AssetManager
         findAssets();
