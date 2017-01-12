@@ -8,6 +8,8 @@ import java.util.zip.ZipFile;
 /**
  * @author dags <dags@dags.me>
  */
+
+// Wrapper for a ZipEntry's InputStream that closes the ZipFile it belongs once the stream is closed
 public class ZipStream extends InputStream implements AutoCloseable {
 
     private final ZipFile zipFile;

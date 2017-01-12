@@ -13,6 +13,7 @@ import java.util.Map;
 /**
  * @author dags <dags@dags.me>
  */
+// Representation of block model json file
 public class Model {
 
     private final Map<String, String> textures = new HashMap<>();

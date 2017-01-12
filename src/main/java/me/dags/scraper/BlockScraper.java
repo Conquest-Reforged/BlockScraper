@@ -6,6 +6,7 @@ import me.dags.scraper.asset.blockstate.BlockState;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.util.ResourcePath;
 import me.dags.scraper.dynmap.ModelRegistrar;
+import me.dags.scraper.dynmap.ModelType;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
@@ -28,56 +29,88 @@ public class BlockScraper {
 
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
+        // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
+        ModelRegistrar.setMCDir(Loader.instance().getConfigDir().getParentFile());
+
+        // Scan for ModContainers and add to AssetManager
         findAssets();
-        scrapeBlocks();
+
+        // Loop through block registry and attempt to generate dynmodels for them
+        registerBlocks();
+
+        // Tell dynmap we're done registering models/textures
+        ModelRegistrar.publish();
+
+        // Clear references to ModContainers & cached resources
+        AssetManager.getInstance().clear();
+
+        // Clear cached ModTextureDefinition and TextureFile references
+        ModelRegistrar.clear();
     }
 
     private void findAssets() {
         for (ModContainer mod : Loader.instance().getActiveModList()) {
             AssetContainer container = new AssetContainer(mod.getModId(), mod.getSource());
             if (mod.getModId().equals(MOD_ID)) {
+                // Add self as the root AssetContainer (other mods override me)
                 AssetManager.getInstance().setDefaultContainer(container);
             } else {
+                // Add other to containers list
                 AssetManager.getInstance().addContainer(container);
             }
         }
     }
 
-    private void scrapeBlocks() {
+    private void registerBlocks() {
         for (Block block : Block.REGISTRY) {
+            // Don't register models/textures for vanilla blocks. Dynmap handles these
             if (!block.getRegistryName().getResourceDomain().equals("minecraft")) {
                 registerBlock(block);
             }
         }
-        AssetManager.getInstance().clear();
-        ModelRegistrar.publish();
-        ModelRegistrar.clear();
     }
 
     private void registerBlock(Block block) {
-        ResourceLocation registryName = block.getRegistryName();
-        String domain = registryName.getResourceDomain();
-        String blockName = registryName.getResourcePath();
-        ResourcePath statePath = new ResourcePath(registryName.toString(), "blockstates", ".json");
+        try {
+            ResourcePath statePath = new ResourcePath(block.getRegistryName(), "blockstates", ".json");
+            BlockState blockState = BlockState.forPath(statePath);
 
-        BlockState blockState = BlockState.forPath(statePath);
-        if (blockState != null && !blockState.hasVariants()) {
-            Set<Integer> visited = new HashSet<>();
-
-            for (IBlockState variant : block.getBlockState().getValidStates()) {
-                int meta = block.getMetaFromState(variant);
-                if (visited.add(meta)) {
-                    try {
-                        String query = StateMapper.getBlockstateStateQuery(variant);
-                        Model model = blockState.getModel(query);
-                        ModelRegistrar.register(domain, blockName, meta, model);
-                    } catch (Throwable throwable) {
-                        System.out.println("Error on block: " + registryName);
-                        if (debug) {
-                            throwable.printStackTrace();
+            if (blockState != null) {
+                if (blockState.getModelType() != ModelType.CUSTOM) {
+                    // blockstate json for this block specifies one of Dynmap's built-in models to use
+                    registerVariant(block, block.getDefaultState(), 0, blockState);
+                } else if (blockState.hasVariants()) {
+                    // attempt to build and register custom models from models/block jsons for each variant/meta
+                    Set<Integer> visited = new HashSet<>();
+                    for (IBlockState variant : block.getBlockState().getValidStates()) {
+                        int meta = block.getMetaFromState(variant);
+                        if (visited.add(meta)) {
+                            registerVariant(block, variant, meta, blockState);
                         }
                     }
                 }
+            }
+        }  catch (Throwable t) {
+            System.out.println("Error registering block: " + block.getRegistryName());
+            if (debug) {
+                t.printStackTrace();
+            }
+        }
+    }
+
+    private void registerVariant(Block block, IBlockState variant, int meta, BlockState blockState) {
+        try {
+            ResourceLocation registryName = block.getRegistryName();
+            String domain = registryName.getResourceDomain();
+            String name = registryName.getResourcePath();
+            String query = StateMapper.getBlockstateStateQuery(variant);
+
+            Model model = blockState.getModel(query);
+            ModelRegistrar.register(domain, name, meta, blockState.getModelType(), model);
+        } catch (Throwable t) {
+            System.out.println("Error registering variant: " + variant);
+            if (debug) {
+                t.printStackTrace();
             }
         }
     }

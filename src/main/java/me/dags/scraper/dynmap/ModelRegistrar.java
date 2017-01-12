@@ -4,7 +4,6 @@ import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.model.Element;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.util.ResourcePath;
-import net.minecraftforge.fml.common.Loader;
 import org.dynmap.modsupport.*;
 
 import java.io.File;
@@ -20,6 +19,10 @@ public class ModelRegistrar {
     private static Map<String, ModTextureDefinition> definitions = new HashMap<>();
     private static File textureDir;
 
+    public static void setMCDir(File dir) {
+        textureDir = new File(dir, "dynmap/texturepacks/standard");
+    }
+
     public static void publish() {
         for (ModTextureDefinition definition : definitions.values()) {
             definition.getModelDefinition().publishDefinition();
@@ -32,17 +35,65 @@ public class ModelRegistrar {
         textureFileCache.clear();
     }
 
-    public static void register(String domain, String name, int meta, Model model) {
+    public static void register(String domain, String name, int meta, ModelType type, Model model) {
+        switch (type) {
+            case DOOR:
+                registerDoor(domain, name, model);
+                break;
+            case FENCE:
+                registerWallFence(domain, name, model, WallFenceBlockModel.FenceType.FENCE);
+            case PANE:
+                registerPane(domain, name, model);
+                break;
+            case PLANT:
+                registerPlant(domain, name, model);
+                break;
+            case WALL:
+                registerWallFence(domain, name, model, WallFenceBlockModel.FenceType.WALL);
+                break;
+            default:
+                registerCustom(domain, name, meta, model);
+        }
+    }
+
+    private static void registerCustom(String domain, String name, int meta, Model model) {
         ModTextureDefinition definition = getDefinition(domain);
 
-        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
-        textureRecord.setMetaValue(meta);
-
         CuboidBlockModel blockModel = definition.getModelDefinition().addCuboidModel(name);
+        constructCubeModel(blockModel, model);
         blockModel.setMetaValue(meta);
 
-        registerShapes(blockModel, model);
-        registerTextures(definition, textureRecord, model);
+        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
+        registerTextures(definition, textureRecord, model, true);
+        textureRecord.setMetaValue(meta);
+    }
+
+    private static void registerDoor(String domain, String name, Model model) {
+        ModTextureDefinition definition = getDefinition(domain);
+        definition.getModelDefinition().addDoorModel(name);
+        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
+        registerTextures(definition, textureRecord, model, true);
+    }
+
+    private static void registerWallFence(String domain, String name, Model model, WallFenceBlockModel.FenceType type) {
+        ModTextureDefinition definition = getDefinition(domain);
+        definition.getModelDefinition().addWallFenceModel(name, type);
+        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
+        registerTextures(definition, textureRecord, model, true);
+    }
+
+    private static void registerPane(String domain, String name, Model model) {
+        ModTextureDefinition definition = getDefinition(domain);
+        definition.getModelDefinition().addPaneModel(name);
+        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
+        registerTextures(definition, textureRecord, model, true);
+    }
+
+    private static void registerPlant(String domain, String name, Model model) {
+        ModTextureDefinition definition = getDefinition(domain);
+        definition.getModelDefinition().addPlantModel(name);
+        BlockTextureRecord textureRecord = definition.addBlockTextureRecord(name);
+        registerTextures(definition, textureRecord, model, false);
     }
 
     private static ModTextureDefinition getDefinition(String domain) {
@@ -53,36 +104,7 @@ public class ModelRegistrar {
         return definition;
     }
 
-    private static void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model) {
-        SideUtil counter = new SideUtil();
-
-        for (Map.Entry<String, String> entry : model.getTextures()) {
-            BlockSide side = SideUtil.fromName(entry.getKey());
-            String icon = entry.getValue();
-
-            if (icon.startsWith("#")) {
-                icon = model.getTexture(icon.substring(1));
-            }
-
-            if (icon != null) {
-                ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
-                TextureFile textureFile = getTextureFile(definition, texture);
-                textureRecord.setSideTexture(textureFile, side);
-
-                counter.recordSide(side, textureFile);
-                AssetManager.getInstance().extractToDir(getTextureDir(), texture);
-            }
-        }
-
-        if (counter.hasFallback()) {
-            TextureFile fallback = counter.getFallbackTexture();
-            for (BlockSide side : counter.getMissingSides()) {
-                textureRecord.setSideTexture(fallback, side);
-            }
-        }
-    }
-
-    private static void registerShapes(CuboidBlockModel blockModel, Model model) {
+    private static void constructCubeModel(CuboidBlockModel blockModel, Model model) {
         for (Element element : model.getElements()) {
             double x1 = element.x1 / 16D;
             double y1 = element.y1 / 16D;
@@ -100,6 +122,38 @@ public class ModelRegistrar {
         }
     }
 
+    private static void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model, boolean useFallback) {
+        SideUtil counter = new SideUtil();
+
+        for (Map.Entry<String, String> entry : model.getTextures()) {
+            BlockSide side = SideUtil.fromName(entry.getKey());
+            String icon = entry.getValue();
+
+            if (icon.startsWith("#")) {
+                icon = model.getTexture(icon.substring(1));
+            }
+
+            if (icon != null) {
+                ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
+                TextureFile textureFile = getTextureFile(definition, texture);
+                textureRecord.setSideTexture(textureFile, side);
+
+                counter.recordSide(side, textureFile);
+
+                if (textureDir != null) {
+                    AssetManager.getInstance().extractToDir(textureDir, texture);
+                }
+            }
+        }
+
+        if (useFallback && counter.hasFallback()) {
+            TextureFile fallback = counter.getFallbackTexture();
+            for (BlockSide side : counter.getMissingSides()) {
+                textureRecord.setSideTexture(fallback, side);
+            }
+        }
+    }
+
     private static TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
         TextureFile file = textureFileCache.get(texture);
         if (file == null) {
@@ -107,13 +161,5 @@ public class ModelRegistrar {
             textureFileCache.put(texture, file);
         }
         return file;
-    }
-
-    private static File getTextureDir() {
-        if (textureDir == null) {
-            File root = Loader.instance().getConfigDir().getParentFile();
-            return textureDir = new File(root, "dynmap/texturepacks/standard");
-        }
-        return textureDir;
     }
 }

@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 /**
  * @author dags <dags@dags.me>
  */
+
+// A bit like a ResourceLocation. Util for translating between MC style asset paths to 'real' paths
 public class ResourcePath {
 
     private final String domain;
@@ -17,6 +19,11 @@ public class ResourcePath {
     public ResourcePath(String in, String parent) {
         this(in, parent, "");
     }
+
+    public ResourcePath(Object in, String require, String extension) {
+        this(in.toString(), require, extension);
+    }
+
 
     public ResourcePath(String in, String require, String extension) {
         int index = in.indexOf(':');
