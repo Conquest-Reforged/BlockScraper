@@ -8,7 +8,6 @@ import me.dags.scraper.asset.util.ResourcePath;
 import org.dynmap.modsupport.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
