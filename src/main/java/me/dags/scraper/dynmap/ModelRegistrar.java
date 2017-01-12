@@ -145,7 +145,7 @@ public final class ModelRegistrar {
 
             if (icon != null) {
                 ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
-                TextureFile textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
+                TextureFile textureFile = getTextureFile(definition, texture);
 
                 if (textureFile == null) {
                     throw new UnsupportedOperationException("Missing Asset: " + texture.getFilePath());

@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * @author dags <dags@dags.me>
  */
-@Mod(modid = BlockScraper.MOD_ID, version = "1.0")
+@Mod(modid = BlockScraper.MOD_ID, version = "1.0", dependencies = "required-after:Dynmap")
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";

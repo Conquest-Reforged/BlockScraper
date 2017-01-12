@@ -18,7 +18,7 @@ public class Element {
     public final int x2, y2, z2;
     public final List<String> faces;
 
-    private Element(int x1, int y1, int z1, int x2, int y2, int z2, List<String> faces) {
+    public Element(int x1, int y1, int z1, int x2, int y2, int z2, List<String> faces) {
         this.x1 = Math.min(x1, x2);
         this.y1 = Math.min(y1, y2);
         this.z1 = Math.min(z1, z2);
@@ -68,34 +68,31 @@ public class Element {
 
     public Element rotateX(int degrees) {
         double rads = Math.toRadians(degrees);
-        int yOff = degrees > 89 && degrees < 271 ? 16 : 0;
-        int zOff = degrees > 179 && degrees < 361 ? 16 : 0;
-        int z1 = (int) Math.round(this.z1 * Math.cos(rads) - this.y1 * Math.sin(rads)) + zOff;
-        int y1 = (int) Math.round(this.y1 * Math.cos(rads) + this.z1 * Math.sin(rads)) + yOff;
-        int z2 = (int) Math.round(this.z2 * Math.cos(rads) - this.y2 * Math.sin(rads)) + zOff;
-        int y2 = (int) Math.round(this.y2 * Math.cos(rads) + this.z2 * Math.sin(rads)) + yOff;
+        int cz = 8, cy = 8;
+        int z1 = cz + (int) Math.round((this.z1 - cz) * Math.cos(rads) - (this.y1 - cy) * Math.sin(rads));
+        int y1 = cy + (int) Math.round((this.y1 - cy) * Math.cos(rads) + (this.z1 - cz) * Math.sin(rads));
+        int z2 = cz + (int) Math.round((this.z2 - cz) * Math.cos(rads) - (this.y2 - cy) * Math.sin(rads));
+        int y2 = cy + (int) Math.round((this.y2 - cy) * Math.cos(rads) + (this.z2 - cz) * Math.sin(rads));
         return new Element(x1, y1, z1, x2, y2, z2, faces);
     }
 
     public Element rotateY(int degrees) {
         double rads = Math.toRadians(degrees);
-        int xOff = degrees > 89 && degrees < 270 ? 16 : 0;
-        int zOff = degrees > 179 && degrees < 360 ? 16 : 0;
-        int x1 = (int) Math.round(this.x1 * Math.cos(rads) - this.z1 * Math.sin(rads)) + xOff;
-        int z1 = (int) Math.round(this.z1 * Math.cos(rads) + this.x1 * Math.sin(rads)) + zOff;
-        int x2 = (int) Math.round(this.x2 * Math.cos(rads) - this.z2 * Math.sin(rads)) + xOff;
-        int z2 = (int) Math.round(this.z2 * Math.cos(rads) + this.x2 * Math.sin(rads)) + zOff;
+        int cx = 8, cz = 8;
+        int x1 = cx + (int) Math.round((this.x1 - cx) * Math.cos(rads) - (this.z1 - cz) * Math.sin(rads));
+        int z1 = cz + (int) Math.round((this.z1 - cz) * Math.cos(rads) + (this.x1 - cx) * Math.sin(rads));
+        int x2 = cx + (int) Math.round((this.x2 - cx) * Math.cos(rads) - (this.z2 - cz) * Math.sin(rads));
+        int z2 = cz + (int) Math.round((this.z2 - cz) * Math.cos(rads) + (this.x2 - cx) * Math.sin(rads));
         return new Element(x1, y1, z1, x2, y2, z2, faces);
     }
 
     public Element rotateZ(int degrees) {
         double rads = Math.toRadians(degrees);
-        int xOff = degrees > 89 && degrees < 271 ? 16 : 0;
-        int yOff = degrees > 179 && degrees < 361 ? 16 : 0;
-        int x1 = (int) Math.round(this.x1 * Math.cos(rads) - this.y1 * Math.sin(rads)) + xOff;
-        int y1 = (int) Math.round(this.y1 * Math.cos(rads) + this.x1 * Math.sin(rads)) + yOff;
-        int x2 = (int) Math.round(this.x2 * Math.cos(rads) - this.y2 * Math.sin(rads)) + xOff;
-        int y2 = (int) Math.round(this.y2 * Math.cos(rads) + this.x2 * Math.sin(rads)) + yOff;
+        int cx = 8, cy = 8;
+        int x1 = cx + (int) Math.round((this.x1 - cx) * Math.cos(rads) - (this.z1 - cy) * Math.sin(rads));
+        int y1 = cy + (int) Math.round((this.y1 - cy) * Math.cos(rads) + (this.x1 - cx) * Math.sin(rads));
+        int x2 = cx + (int) Math.round((this.x2 - cx) * Math.cos(rads) - (this.z2 - cy) * Math.sin(rads));
+        int y2 = cy + (int) Math.round((this.y2 - cy) * Math.cos(rads) + (this.x2 - cx) * Math.sin(rads));
         return new Element(x1, y1, z1, x2, y2, z2, faces);
     }
 
