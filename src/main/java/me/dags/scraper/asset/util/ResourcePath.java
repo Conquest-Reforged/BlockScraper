@@ -8,12 +8,11 @@ import java.nio.file.Paths;
  */
 public class ResourcePath {
 
-    private final String id;
     private final String domain;
-    private final String resource;
     private final String fileName;
     private final String filePath;
     private final String extension;
+    private final int hash;
 
     public ResourcePath(String in, String parent) {
         this(in, parent, "");
@@ -22,9 +21,7 @@ public class ResourcePath {
     public ResourcePath(String in, String require, String extension) {
         int index = in.indexOf(':');
         int start = index + 1;
-        int end = in.length();
-
-        this.id = in;
+        int end = in.endsWith(extension) ? in.length() - extension.length() : in.length();
 
         String domain = index > 0 ? in.substring(0, index) : "minecraft";
         this.domain = domain;
@@ -38,44 +35,33 @@ public class ResourcePath {
             path = parent.resolve(resource);
         }
 
-        this.resource = toString(path);
-
         Path absFile = Paths.get("assets").resolve(domain).resolve(path);
         this.filePath = toString(absFile);
-
         this.extension = extension;
+        this.hash = getUniqueName().hashCode();
     }
 
-    public ResourcePath(String id, String domain, String resource, String file, String filePath, String extension) {
-        this.id = id;
+    public ResourcePath(String domain, String fileName, String filePath, String extension) {
         this.domain = domain;
-        this.resource = resource;
-        this.fileName = file;
+        this.fileName = fileName;
         this.filePath = filePath;
         this.extension = extension;
+        this.hash = filePath.hashCode();
     }
 
     public ResourcePath withExtension(String extension) {
         if (this.extension.equals(extension)) {
             return this;
         }
-        return new ResourcePath(id, domain, resource, fileName, filePath, extension);
+        return new ResourcePath(domain, fileName, filePath, extension);
     }
 
-    public String getId() {
-        return domain + ":" + resource;
+    public String getUniqueName() {
+        return domain + ":" + getFilePath();
     }
 
     public String getResourceName() {
         return fileName;
-    }
-
-    public String getFileName() {
-        return fileName + extension;
-    }
-
-    public String getResourcePath() {
-        return resource + extension;
     }
 
     public String getFilePath() {
@@ -94,7 +80,7 @@ public class ResourcePath {
 
     @Override
     public int hashCode() {
-        return getId().hashCode();
+        return hash;
     }
 
     private static String toString(Path path) {

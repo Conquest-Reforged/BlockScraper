@@ -2,7 +2,6 @@ package me.dags.scraper;
 
 import me.dags.scraper.asset.AssetContainer;
 import me.dags.scraper.asset.AssetManager;
-import me.dags.scraper.asset.AssetUtils;
 import me.dags.scraper.asset.blockstate.BlockState;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.util.ResourcePath;
@@ -25,6 +24,7 @@ import java.util.Set;
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
+    private boolean debug = true;
 
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
@@ -51,6 +51,7 @@ public class BlockScraper {
         }
         AssetManager.getInstance().clear();
         ModelRegistrar.publish();
+        ModelRegistrar.clear();
     }
 
     private void registerBlock(Block block) {
@@ -59,8 +60,8 @@ public class BlockScraper {
         String blockName = registryName.getResourcePath();
         ResourcePath statePath = new ResourcePath(registryName.toString(), "blockstates", ".json");
 
-        BlockState blockState = AssetUtils.getState(statePath);
-        if (blockState != null && !blockState.variants.isEmpty()) {
+        BlockState blockState = BlockState.forPath(statePath);
+        if (blockState != null && !blockState.hasVariants()) {
             Set<Integer> visited = new HashSet<>();
 
             for (IBlockState variant : block.getBlockState().getValidStates()) {
@@ -72,6 +73,9 @@ public class BlockScraper {
                         ModelRegistrar.register(domain, blockName, meta, model);
                     } catch (Throwable throwable) {
                         System.out.println("Error on block: " + registryName);
+                        if (debug) {
+                            throwable.printStackTrace();
+                        }
                     }
                 }
             }

@@ -16,6 +16,7 @@ import java.util.Map;
  */
 public class ModelRegistrar {
 
+    private static Map<ResourcePath, TextureFile> textureFileCache = new HashMap<>();
     private static Map<String, ModTextureDefinition> definitions = new HashMap<>();
     private static File textureDir;
 
@@ -24,7 +25,11 @@ public class ModelRegistrar {
             definition.getModelDefinition().publishDefinition();
             definition.publishDefinition();
         }
+    }
+
+    public static void clear() {
         definitions.clear();
+        textureFileCache.clear();
     }
 
     public static void register(String domain, String name, int meta, Model model) {
@@ -51,17 +56,17 @@ public class ModelRegistrar {
     private static void registerTextures(ModTextureDefinition definition, BlockTextureRecord textureRecord, Model model) {
         SideUtil counter = new SideUtil();
 
-        for (Map.Entry<String, String> entry : model.textures.entrySet()) {
+        for (Map.Entry<String, String> entry : model.getTextures()) {
             BlockSide side = SideUtil.fromName(entry.getKey());
             String icon = entry.getValue();
 
             if (icon.startsWith("#")) {
-                icon = model.textures.get(icon.substring(1));
+                icon = model.getTexture(icon.substring(1));
             }
 
             if (icon != null) {
                 ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
-                TextureFile textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
+                TextureFile textureFile = getTextureFile(definition, texture);
                 textureRecord.setSideTexture(textureFile, side);
 
                 counter.recordSide(side, textureFile);
@@ -78,7 +83,7 @@ public class ModelRegistrar {
     }
 
     private static void registerShapes(CuboidBlockModel blockModel, Model model) {
-        for (Element element : model.elements) {
+        for (Element element : model.getElements()) {
             double x1 = element.x1 / 16D;
             double y1 = element.y1 / 16D;
             double z1 = element.z1 / 16D;
@@ -93,6 +98,15 @@ public class ModelRegistrar {
             double zmax = Math.max(z1, z2);
             blockModel.addCuboid(xmin, ymin, zmin, xmax, ymax, zmax, null);
         }
+    }
+
+    private static TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
+        TextureFile file = textureFileCache.get(texture);
+        if (file == null) {
+            file = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
+            textureFileCache.put(texture, file);
+        }
+        return file;
     }
 
     private static File getTextureDir() {

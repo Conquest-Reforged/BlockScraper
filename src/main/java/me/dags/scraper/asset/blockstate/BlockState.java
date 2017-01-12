@@ -1,6 +1,8 @@
 package me.dags.scraper.asset.blockstate;
 
-import me.dags.scraper.asset.AssetUtils;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.util.ResourcePath;
 
@@ -12,13 +14,28 @@ import java.util.Map;
  */
 public class BlockState {
 
-    public final Map<String, Variant> variants = new HashMap<>();
+    private final Map<String, Variant> variants = new HashMap<>();
+
+    private BlockState(JsonObject object) {
+        JsonObject variants = object.getAsJsonObject("variants");
+        if (variants != null) {
+            for (Map.Entry<String, JsonElement> variant : variants.entrySet()) {
+                if (variant.getValue().isJsonObject()) {
+                    this.variants.put(variant.getKey(), new Variant(variant.getValue().getAsJsonObject()));
+                }
+            }
+        }
+    }
+
+    public boolean hasVariants() {
+        return !variants.isEmpty();
+    }
 
     public Model getModel(String blockstateQuery) {
         Variant variant = variants.get(blockstateQuery);
         if (variant != null) {
             ResourcePath modelPath = new ResourcePath(variant.model, "models/block", ".json");
-            Model model = AssetUtils.getModel(modelPath);
+            Model model = Model.forPath(modelPath);
             if (!variant.axis.isEmpty()) {
                 if (variant.axis.equals("x")) {
                     return model.rotateX(variant.rotation);
@@ -34,5 +51,10 @@ public class BlockState {
             }
         }
         return null;
+    }
+
+    public static BlockState forPath(ResourcePath resourcePath) {
+        JsonObject object = AssetManager.getInstance().getJson(resourcePath);
+        return new BlockState(object);
     }
 }
