@@ -1,6 +1,7 @@
 package me.dags.scraper.dynmap;
 
 import org.dynmap.modsupport.BlockSide;
+import org.dynmap.modsupport.BlockTextureRecord;
 import org.dynmap.modsupport.TextureFile;
 
 import java.util.Arrays;
@@ -43,6 +44,25 @@ public class SideUtil {
             }
         }
         return Arrays.copyOf(sides, j);
+    }
+
+    public SideUtil apply(BlockTextureRecord record, TextureFile file, BlockSide side) {
+        if (side == BlockSide.ALLFACES) {
+            for (int i = DOWN; i < WEST; i++) {
+                record.setPatchTexture(file, i);
+            }
+            return this;
+        }
+
+        if (side == BlockSide.ALLSIDES) {
+            for (int i = NORTH; i < WEST; i++) {
+                record.setPatchTexture(file, i);
+            }
+            return this;
+        }
+
+        record.setPatchTexture(file, patchIndex(side));
+        return this;
     }
 
     public SideUtil recordSide(BlockSide side, TextureFile textureFile) {
@@ -132,10 +152,30 @@ public class SideUtil {
                 return BlockSide.EAST;
             case "west":
                 return BlockSide.WEST;
-            case "recordSide":
+            case "side":
             case "sides":
                 return BlockSide.ALLSIDES;
         }
         return BlockSide.ALLSIDES;
+    }
+
+    static int patchIndex(BlockSide side) {
+        switch (side) {
+            case ALLSIDES:
+                return -1;
+            case BOTTOM:
+                return DOWN;
+            case TOP:
+                return UP;
+            case NORTH:
+                return NORTH;
+            case SOUTH:
+                return SOUTH;
+            case EAST:
+                return EAST;
+            case WEST:
+                return WEST;
+        }
+        return -2;
     }
 }

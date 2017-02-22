@@ -93,7 +93,7 @@ public class AssetPath implements Comparable<AssetPath> {
         String domain = reader.domain();
         String remaining = reader.remaining();
 
-        Path route = Paths.get(domain, parent);
+        Path route = Paths.get("assets", domain, parent);
         Path path = AssetPath.merge(route, Paths.get(remaining));
 
         return new AssetPath(path);

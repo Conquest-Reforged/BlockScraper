@@ -12,6 +12,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.HashSet;
@@ -20,23 +22,16 @@ import java.util.Set;
 /**
  * @author dags <dags@dags.me>
  */
-@Mod(modid = BlockScraper.MOD_ID, version = "1.0", dependencies = "required-after:Dynmap")
+@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "1.0", dependencies = "required-after:Dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
-    private static boolean debug = true;
+    public static final Logger logger = LogManager.getLogger("BlockScraper");
+    private static boolean debug = false;
 
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
         File mcDir = Loader.instance().getConfigDir().getParentFile();
-        File modSupport = new File(mcDir, "dynmap/renderdata/modsupport");
-        if (modSupport.exists()) {
-            String[] list = modSupport.list();
-            if (list != null && list.length > 0) {
-                System.out.println("ModSupport files exist, skipping block scraping");
-                return;
-            }
-        }
 
         // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
         ModelRegistrar.getInstance().setMCDir(mcDir);
@@ -87,7 +82,7 @@ public class BlockScraper {
                 }
             }
         } catch (Throwable t) {
-            System.out.println("Error registering block: " + block.getRegistryName());
+            logger.error("Error registering block: {}", block.getRegistryName());
             if (debug) {
                 t.printStackTrace();
             }
@@ -106,7 +101,7 @@ public class BlockScraper {
                 ModelRegistrar.getInstance().register(domain, name, meta, blockState.getModelType(), model);
             }
         } catch (Throwable t) {
-            System.out.println("Error registering variant: " + variant);
+            logger.error("Error registering variant: {}", variant);
             if (debug) {
                 t.printStackTrace();
             }

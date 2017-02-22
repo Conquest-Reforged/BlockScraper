@@ -34,10 +34,6 @@ public final class AssetManager {
         return INSTANCE;
     }
 
-    private boolean isPresent() {
-        return assets != null;
-    }
-
     public void clear() {
         assets.clear();
         domains.clear();
@@ -75,10 +71,6 @@ public final class AssetManager {
     }
 
     public JsonObject getJson(AssetPath path) {
-        if (!isPresent()) {
-            return EMPTY_OBJ;
-        }
-
         JsonObject cached = jsonCache.get(path = path.withExtension(".json"));
         if (cached != null) {
             return cached;
@@ -104,8 +96,6 @@ public final class AssetManager {
     }
 
     public void extractAssets(AssetPath match, Path root) {
-        if (isPresent()) {
-            assets.transferChildren(match, root);
-        }
+        assets.transferChildren(match, root);
     }
 }

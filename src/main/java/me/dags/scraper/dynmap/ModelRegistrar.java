@@ -20,7 +20,6 @@ public final class ModelRegistrar {
 
     private static final ModelRegistrar instance = new ModelRegistrar();
 
-    private final Map<AssetPath, TextureFile> textureFileCache = new HashMap<>();
     private final Map<String, ModTextureDefinition> definitions = new HashMap<>();
     private Path texturePack;
 
@@ -46,7 +45,6 @@ public final class ModelRegistrar {
 
     public void clear() {
         definitions.clear();
-        textureFileCache.clear();
     }
 
     public void register(String domain, String name, int meta, ModelType type, Model model) {
@@ -148,14 +146,9 @@ public final class ModelRegistrar {
             }
 
             if (icon != null) {
-                AssetPath texture = AssetPath.of(icon, "textures/blocks");
-                TextureFile textureFile = getTextureFile(definition, texture);
-
-                if (textureFile == null) {
-                    throw new UnsupportedOperationException("Missing Asset: " + texture);
-                }
-
-                textureRecord.setSideTexture(textureFile, side);
+                AssetPath path = AssetPath.of(icon, "textures/blocks");
+                TextureFile textureFile = definition.registerTextureFile(path.getName(), path.withExtension(".png").toString());
+                counter.apply(textureRecord, textureFile, side);
                 counter.recordSide(side, textureFile);
             }
         }
@@ -163,19 +156,8 @@ public final class ModelRegistrar {
         if (useFallback && counter.hasFallback()) {
             TextureFile fallback = counter.getFallbackTexture();
             for (BlockSide side : counter.getMissingSides()) {
-                textureRecord.setSideTexture(fallback, side);
+                counter.apply(textureRecord, fallback, side);
             }
         }
-    }
-
-    private TextureFile getTextureFile(ModTextureDefinition definition, AssetPath texture) {
-        TextureFile textureFile = textureFileCache.get(texture = texture.withExtension(".png"));
-        if (textureFile == null) {
-            textureFile = definition.registerTextureFile(texture.getName(), texture.toString());
-            if (textureFile != null) {
-                textureFileCache.put(texture, textureFile);
-            }
-        }
-        return textureFile;
     }
 }

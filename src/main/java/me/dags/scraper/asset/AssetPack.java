@@ -1,5 +1,7 @@
 package me.dags.scraper.asset;
 
+import me.dags.scraper.BlockScraper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,10 +100,21 @@ public class AssetPack {
         }
 
         private void add(Path path) {
-            if (Files.isDirectory(path)) {
-                addFile(path);
-            } else {
-                addZip(path);
+            if (!Files.exists(path)) {
+                BlockScraper.logger.info("Skipping AssetContainer: {}", path);
+                return;
+            }
+
+            try {
+                if (Files.isDirectory(path)) {
+                    addFile(path);
+                } else {
+                    addZip(path);
+                }
+
+                BlockScraper.logger.info("Added AssetContainer: {}", path);
+            } catch (Throwable t) {
+                t.printStackTrace();
             }
         }
 
