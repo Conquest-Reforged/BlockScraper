@@ -3,7 +3,7 @@ package me.dags.scraper.asset.model;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import me.dags.scraper.asset.AssetManager;
-import me.dags.scraper.asset.util.ResourcePath;
+import me.dags.scraper.asset.AssetPath;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +28,8 @@ public class Model {
 
         Model parentModel;
         if (parent != null) {
-            ResourcePath parentPath = new ResourcePath(parent.getAsString(), "models/block", ".json");
-            JsonObject parentObj = AssetManager.getInstance().getJson(parentPath);
+            AssetPath path = AssetPath.of(parent.getAsString(), "models/block");
+            JsonObject parentObj = AssetManager.getInstance().getJson(path);
             parentModel = new Model(parentObj);
         } else {
             parentModel = new Model();
@@ -101,8 +101,8 @@ public class Model {
         return "textures=" + textures.toString() + ",elements=" + elements.toString();
     }
 
-    public static Model forPath(ResourcePath resourcePath) {
-        JsonObject object = AssetManager.getInstance().getJson(resourcePath);
+    public static Model forPath(AssetPath path) {
+        JsonObject object = AssetManager.getInstance().getJson(path);
         return new Model(object);
     }
 }

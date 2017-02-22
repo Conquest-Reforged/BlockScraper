@@ -1,20 +1,19 @@
 package me.dags.scraper;
 
-import me.dags.scraper.asset.AssetContainer;
 import me.dags.scraper.asset.AssetManager;
+import me.dags.scraper.asset.AssetPath;
 import me.dags.scraper.asset.blockstate.BlockState;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.model.ModelType;
-import me.dags.scraper.asset.util.ResourcePath;
 import me.dags.scraper.dynmap.ModelRegistrar;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,43 +24,40 @@ import java.util.Set;
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
-    private boolean debug = true;
+    private static boolean debug = true;
 
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
-        // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
-        ModelRegistrar.getInstance().setMCDir(Loader.instance().getConfigDir().getParentFile());
+        File mcDir = Loader.instance().getConfigDir().getParentFile();
+        File modSupport = new File(mcDir, "dynmap/renderdata/modsupport");
+        if (modSupport.exists()) {
+            String[] list = modSupport.list();
+            if (list != null && list.length > 0) {
+                System.out.println("ModSupport files exist, skipping block scraping");
+                return;
+            }
+        }
 
-        // Scan for ModContainers and add to AssetManager
-        findAssets();
+        // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
+        ModelRegistrar.getInstance().setMCDir(mcDir);
+
+        // Iterate over ModContainers and collect assets into one virtual (in-memory) pack of assets
+        AssetManager.getInstance().findAssets();
 
         // Loop through block registry and attempt to generate dynmodels for them
-        registerBlocks();
-
-        // Clear references to ModContainers & cached resources
-        AssetManager.getInstance().clear();
+        BlockScraper.registerBlocks();
 
         // Tell dynmap we're done registering models/textures
         ModelRegistrar.getInstance().publish();
+
+        // Clear assets & cached resources
+        AssetManager.getInstance().clear();
 
         // Clear cached ModTextureDefinition and TextureFile references
         ModelRegistrar.getInstance().clear();
     }
 
-    private void findAssets() {
-        for (ModContainer mod : Loader.instance().getActiveModList()) {
-            AssetContainer container = new AssetContainer(mod.getModId(), mod.getSource());
-            if (mod.getModId().equals(MOD_ID)) {
-                // Add self as the root AssetContainer (other mods override me)
-                AssetManager.getInstance().setDefaultContainer(container);
-            } else {
-                // Add other to containers list
-                AssetManager.getInstance().addContainer(container);
-            }
-        }
-    }
-
-    private void registerBlocks() {
+    private static void registerBlocks() {
         for (Block block : Block.REGISTRY) {
             // Don't register models/textures for vanilla blocks. Dynmap handles these
             if (!block.getRegistryName().getResourceDomain().equals("minecraft")) {
@@ -70,9 +66,9 @@ public class BlockScraper {
         }
     }
 
-    private void registerBlock(Block block) {
+    private static void registerBlock(Block block) {
         try {
-            ResourcePath statePath = new ResourcePath(block.getRegistryName(), "blockstates", ".json");
+            AssetPath statePath = AssetPath.of(block.getRegistryName(), "blockstates");
             BlockState blockState = BlockState.forPath(statePath);
 
             if (blockState != null) {
@@ -90,7 +86,7 @@ public class BlockScraper {
                     }
                 }
             }
-        }  catch (Throwable t) {
+        } catch (Throwable t) {
             System.out.println("Error registering block: " + block.getRegistryName());
             if (debug) {
                 t.printStackTrace();
@@ -98,7 +94,7 @@ public class BlockScraper {
         }
     }
 
-    private void registerVariant(Block block, IBlockState variant, int meta, BlockState blockState) {
+    private static void registerVariant(Block block, IBlockState variant, int meta, BlockState blockState) {
         try {
             ResourceLocation registryName = block.getRegistryName();
             String domain = registryName.getResourceDomain();

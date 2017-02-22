@@ -1,15 +1,17 @@
 package me.dags.scraper.dynmap;
 
 import me.dags.scraper.asset.AssetManager;
+import me.dags.scraper.asset.AssetPath;
 import me.dags.scraper.asset.model.Element;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.model.ModelType;
-import me.dags.scraper.asset.util.ResourcePath;
 import org.dynmap.modsupport.*;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author dags <dags@dags.me>
@@ -18,9 +20,9 @@ public final class ModelRegistrar {
 
     private static final ModelRegistrar instance = new ModelRegistrar();
 
-    private final Map<ResourcePath, TextureFile> textureFileCache = new HashMap<>();
+    private final Map<AssetPath, TextureFile> textureFileCache = new HashMap<>();
     private final Map<String, ModTextureDefinition> definitions = new HashMap<>();
-    private File textureDir;
+    private Path texturePack;
 
     private ModelRegistrar(){}
 
@@ -29,10 +31,13 @@ public final class ModelRegistrar {
     }
 
     public void setMCDir(File dir) {
-        textureDir = new File(dir, "dynmap/texturepacks/standard");
+        texturePack = dir.toPath().resolve("dynmap").resolve("texturepacks").resolve("standard");
     }
 
     public void publish() {
+        Function<String, AssetPath> function = domain -> AssetPath.domain(domain).resolve("textures", "blocks");
+        AssetManager.getInstance().extractAssets(function, texturePack);
+
         for (ModTextureDefinition definition : definitions.values()) {
             definition.getModelDefinition().publishDefinition();
             definition.publishDefinition();
@@ -143,19 +148,15 @@ public final class ModelRegistrar {
             }
 
             if (icon != null) {
-                ResourcePath texture = new ResourcePath(icon, "textures/blocks", ".png");
+                AssetPath texture = AssetPath.of(icon, "textures/blocks");
                 TextureFile textureFile = getTextureFile(definition, texture);
 
                 if (textureFile == null) {
-                    throw new UnsupportedOperationException("Missing Asset: " + texture.getFilePath());
+                    throw new UnsupportedOperationException("Missing Asset: " + texture);
                 }
 
                 textureRecord.setSideTexture(textureFile, side);
                 counter.recordSide(side, textureFile);
-
-                if (textureDir != null) {
-                    AssetManager.getInstance().extractToDir(textureDir, texture);
-                }
             }
         }
 
@@ -167,10 +168,10 @@ public final class ModelRegistrar {
         }
     }
 
-    private TextureFile getTextureFile(ModTextureDefinition definition, ResourcePath texture) {
-        TextureFile textureFile = textureFileCache.get(texture);
+    private TextureFile getTextureFile(ModTextureDefinition definition, AssetPath texture) {
+        TextureFile textureFile = textureFileCache.get(texture = texture.withExtension(".png"));
         if (textureFile == null) {
-            textureFile = definition.registerTextureFile(texture.getResourceName(), texture.getFilePath());
+            textureFile = definition.registerTextureFile(texture.getName(), texture.toString());
             if (textureFile != null) {
                 textureFileCache.put(texture, textureFile);
             }

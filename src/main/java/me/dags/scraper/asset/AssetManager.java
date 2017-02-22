@@ -3,101 +3,109 @@ package me.dags.scraper.asset;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.dags.scraper.asset.util.ResourcePath;
+import me.dags.scraper.BlockScraper;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * @author dags <dags@dags.me>
  */
 public final class AssetManager {
 
-    private static final AssetManager instance = new AssetManager();
+    private static final AssetManager INSTANCE = new AssetManager();
+    private static final JsonParser JSON_PARSER = new JsonParser();
+    private static final JsonObject EMPTY_OBJ = new JsonObject();
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final String REGEX = "\\bassets\\b(.*?)\\b(blockstates|models|textures)\\b";
+    private static final Pattern PATTERN = Pattern.compile(REGEX);
 
-    private AssetContainer defaultContainer;
-    private final List<AssetContainer> containers = new ArrayList<>();
-    private final Map<ResourcePath, JsonObject> resourceCache = new HashMap<>();
-
-    private AssetManager() {
-        defaultContainer = new AssetContainer("default", new File(new File("").getAbsolutePath()));
-    }
+    private AssetPack assets = AssetPack.of(PATTERN);
+    private Collection<String> domains = Collections.emptyList();
+    private Map<AssetPath, JsonObject> jsonCache = Collections.emptyMap();
 
     public static AssetManager getInstance() {
-        return instance;
+        return INSTANCE;
+    }
+
+    private boolean isPresent() {
+        return assets != null;
     }
 
     public void clear() {
-        containers.clear();
-        resourceCache.clear();
-        defaultContainer = null;
+        assets.clear();
+        domains.clear();
+        jsonCache.clear();
+        assets = null;
+        domains = null;
+        jsonCache = null;
     }
 
-    public void setDefaultContainer(AssetContainer container) {
-        this.defaultContainer = container;
+    public void findAssets() {
+        Path defaultPack = Paths.get("");
+        List<Path> sources = new ArrayList<>();
+        List<String> domains = new ArrayList<>();
+        domains.add("minecraft");
+
+        for (ModContainer mod : Loader.instance().getActiveModList()) {
+            domains.add(mod.getModId());
+
+            if (mod.getModId().equals(BlockScraper.MOD_ID)) {
+                // Add self as the root AssetContainer (other mods override me)
+                defaultPack = mod.getSource().toPath();
+            } else {
+                // Add other to containers list
+                sources.add(mod.getSource().toPath());
+            }
+        }
+
+        if (!defaultPack.toString().equals("")) {
+            sources.add(defaultPack);
+        }
+
+        this.assets = AssetPack.of(PATTERN, sources);
+        this.jsonCache = new HashMap<>();
+        this.domains = new ArrayList<>(domains);
     }
 
-    public void addContainer(AssetContainer container) {
-        this.containers.add(container);
-    }
+    public JsonObject getJson(AssetPath path) {
+        if (!isPresent()) {
+            return EMPTY_OBJ;
+        }
 
-    public JsonObject getJson(ResourcePath path) {
-        // Check if resource has been accessed before
-        JsonObject cached = resourceCache.get(path);
+        JsonObject cached = jsonCache.get(path = path.withExtension(".json"));
         if (cached != null) {
             return cached;
         }
 
-        ResourcePath resource = path.withExtension(".json");
-        try (InputStream inputStream = getResource(resource)) {
-            try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                JsonElement element = new JsonParser().parse(reader);
-                JsonObject object = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
-
-                // Cache in-case the resource needs to be accessed again
-                resourceCache.put(path, object);
-
-                return object;
-            }
-        } catch (IOException e) {
-            return new JsonObject();
+        byte[] data = assets.getBytes(path);
+        if (data.length > 0) {
+            String json = new String(data, UTF_8);
+            JsonElement element = JSON_PARSER.parse(json);
+            JsonObject object = element.isJsonObject() ? element.getAsJsonObject() : EMPTY_OBJ;
+            jsonCache.put(path, object);
+            return object;
+        } else {
+            return EMPTY_OBJ;
         }
     }
 
-    public void extractToDir(File dir, ResourcePath resource) {
-        File out = new File(dir, resource.getFilePath());
-        if (out.exists()) {
-            return;
-        }
-        try (InputStream inputStream = getResource(resource)) {
-            out.getParentFile().mkdirs();
-            Files.copy(inputStream, out.toPath());
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void extractAssets(Function<String, AssetPath> pathFunction, Path root) {
+        for (String domain : domains) {
+            AssetPath path = pathFunction.apply(domain);
+            extractAssets(path, root);
         }
     }
 
-    public InputStream getResource(ResourcePath path) throws FileNotFoundException {
-        InputStream inputStream = null;
-        for (int i = containers.size() - 1; inputStream == null && i > -1; i--) {
-            try {
-                AssetContainer container = containers.get(i);
-                inputStream = container.getInputStream(path);
-            } catch (IOException e) {}
-        }
-
-        if (inputStream != null) {
-            return inputStream;
-        }
-
-        try {
-            return defaultContainer.getInputStream(path);
-        } catch (IOException e) {
-            throw new FileNotFoundException(path.toString());
+    public void extractAssets(AssetPath match, Path root) {
+        if (isPresent()) {
+            assets.transferChildren(match, root);
         }
     }
 }

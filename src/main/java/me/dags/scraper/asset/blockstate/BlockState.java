@@ -3,9 +3,9 @@ package me.dags.scraper.asset.blockstate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import me.dags.scraper.asset.AssetManager;
+import me.dags.scraper.asset.AssetPath;
 import me.dags.scraper.asset.model.Model;
 import me.dags.scraper.asset.model.ModelType;
-import me.dags.scraper.asset.util.ResourcePath;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class BlockState {
     public Model getModel(String blockstateQuery) {
         Variant variant = variants.get(blockstateQuery);
         if (variant != null) {
-            ResourcePath modelPath = new ResourcePath(variant.model, "models/block", ".json");
+            AssetPath modelPath = AssetPath.of(variant.model, "models/block");
             Model model = Model.forPath(modelPath);
 
             if (variant.x != 0) {
@@ -68,8 +68,8 @@ public class BlockState {
         return null;
     }
 
-    public static BlockState forPath(ResourcePath resourcePath) {
-        JsonObject object = AssetManager.getInstance().getJson(resourcePath);
+    public static BlockState forPath(AssetPath path) {
+        JsonObject object = AssetManager.getInstance().getJson(path);
         return new BlockState(object);
     }
 }
