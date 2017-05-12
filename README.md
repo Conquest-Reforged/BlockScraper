@@ -13,7 +13,7 @@ Alternatively, a preset model can be specified by adding the field
 
 ### Usage
 This mod can be used client-side or server-side to generate the dynmap data
- \- **dynmap-forge must also be installed in both cases**.
+ \- in both cases, dynmap-forge must also be installed.
 
 All data is ouput to dynmap's config folder found in the root of the game/server
  directory (namely `dynmap/renderdata` and `dynmap/texturepacks`).  
