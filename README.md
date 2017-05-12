@@ -16,7 +16,8 @@ This mod can be used client-side or server-side to generate the dynmap data
  \- in both cases, dynmap-forge must also be installed.
 
 All data is ouput to dynmap's config folder found in the root of the game/server
- directory (namely `dynmap/renderdata` and `dynmap/texturepacks`).  
+ directory (namely `dynmap/renderdata` and `dynmap/texturepacks`).
+ 
 On the client the data is generated when entering a world.  
 On the server, the data is generated on each start-up.  
 
