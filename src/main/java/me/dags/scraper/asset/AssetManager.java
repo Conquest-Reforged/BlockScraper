@@ -23,7 +23,7 @@ public final class AssetManager {
     private static final JsonParser JSON_PARSER = new JsonParser();
     private static final JsonObject EMPTY_OBJ = new JsonObject();
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    private static final String REGEX = "\\bassets\\b(.*?)\\b(blockstates|models|textures)\\b";
+    private static final String REGEX = "\\bassets\\b(.*?)\\b(blockstates|models)\\b";
     private static final Pattern PATTERN = Pattern.compile(REGEX);
 
     private AssetPack assets = AssetPack.of(PATTERN);

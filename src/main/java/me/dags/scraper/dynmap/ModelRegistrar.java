@@ -34,9 +34,6 @@ public final class ModelRegistrar {
     }
 
     public void publish() {
-        Function<String, AssetPath> function = domain -> AssetPath.domain(domain).resolve("textures", "blocks");
-        AssetManager.getInstance().extractAssets(function, texturePack);
-
         for (ModTextureDefinition definition : definitions.values()) {
             definition.getModelDefinition().publishDefinition();
             definition.publishDefinition();
