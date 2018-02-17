@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author dags <dags@dags.me>
  */
-@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.2", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
+@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.3", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
