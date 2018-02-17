@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 group 'me.dags'
-version '0.2-SNAPSHOT-mc1.10.2'
+version '0.3-SNAPSHOT-mc1.10.2'
 
 sourceCompatibility = targetCompatibility = "1.8"
 
