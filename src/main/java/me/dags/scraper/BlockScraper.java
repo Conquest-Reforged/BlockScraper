@@ -11,26 +11,60 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author dags <dags@dags.me>
  */
-@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.3", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
+@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.4", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
     public static final Logger logger = LogManager.getLogger("BlockScraper");
+
+    private static File configFile = new File("");
+    private static boolean scrape = true;
     private static boolean debug = false;
 
     @Mod.EventHandler
+    public void init(FMLPreInitializationEvent event) {
+        configFile = new File(event.getModConfigurationDirectory(), "blockscraper.json");
+    }
+
+    @Mod.EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        Collection<String> mods = Config.findBlockProvidingMods();
+        logger.info("Detected {} block providing mods", mods.size());
+
+        logger.info("Reading config...");
+        Config config = Config.read(configFile);
+
+        logger.info("Detecting setup changes...");
+        if (config.doScrape() || !config.hasAll(mods)) {
+            logger.info("Detected mod changes or scrape force-enabled, running on server start");
+            Config.write(configFile, mods);
+            scrape = true;
+        } else {
+            scrape = false;
+            logger.info("No changes detected, skipping BlockScrape");
+        }
+    }
+
+    @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
+        if (!scrape) {
+            return;
+        }
+
         File mcDir = Loader.instance().getConfigDir().getParentFile();
 
         // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
@@ -101,7 +135,7 @@ public class BlockScraper {
                 ModelRegistrar.getInstance().register(domain, name, meta, blockState.getModelType(), model);
             }
         } catch (Throwable t) {
-            logger.error("Error registering variant: {}", variant);
+            logger.error("Error registering model {} {}", variant, t.getLocalizedMessage());
             if (debug) {
                 t.printStackTrace();
             }

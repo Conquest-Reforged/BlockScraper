@@ -21,9 +21,10 @@ public final class ModelRegistrar {
     private static final ModelRegistrar instance = new ModelRegistrar();
 
     private final Map<String, ModTextureDefinition> definitions = new HashMap<>();
+    private final Map<AssetPath, TextureFile> textures = new HashMap<>();
     private Path texturePack;
 
-    private ModelRegistrar(){}
+    private ModelRegistrar() {}
 
     public static ModelRegistrar getInstance() {
         return instance;
@@ -34,6 +35,8 @@ public final class ModelRegistrar {
     }
 
     public void publish() {
+        Function<String, AssetPath> function = domain -> AssetPath.domain(domain).resolve("textures", "blocks");
+        AssetManager.getInstance().extractAssets(function, texturePack);
         for (ModTextureDefinition definition : definitions.values()) {
             definition.getModelDefinition().publishDefinition();
             definition.publishDefinition();
@@ -42,6 +45,7 @@ public final class ModelRegistrar {
 
     public void clear() {
         definitions.clear();
+        textures.clear();
     }
 
     public void register(String domain, String name, int meta, ModelType type, Model model) {
@@ -113,6 +117,15 @@ public final class ModelRegistrar {
         return definition;
     }
 
+    private TextureFile getTexture(ModTextureDefinition definition, AssetPath path) {
+        TextureFile file = textures.get(path);
+        if (file == null) {
+            file = definition.registerTextureFile(path.getName(), path.withExtension(".png").toString());
+            textures.put(path, file);
+        }
+        return file;
+    }
+
     private void constructCubeModel(CuboidBlockModel blockModel, Model model) {
         for (Element element : model.getElements()) {
             double x1 = element.x1 / 16D;
@@ -144,7 +157,10 @@ public final class ModelRegistrar {
 
             if (icon != null) {
                 AssetPath path = AssetPath.of(icon, "textures/blocks");
-                TextureFile textureFile = definition.registerTextureFile(path.getName(), path.withExtension(".png").toString());
+                TextureFile textureFile = getTexture(definition, path);
+                if (textureFile == null) {
+                    throw new UnsupportedOperationException("Dynmap unable to register texture: " + path.withExtension(".png"));
+                }
                 counter.apply(textureRecord, textureFile, side);
                 counter.recordSide(side, textureFile);
             }

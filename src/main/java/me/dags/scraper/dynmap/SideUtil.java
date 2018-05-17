@@ -1,5 +1,6 @@
 package me.dags.scraper.dynmap;
 
+import com.google.common.base.Preconditions;
 import org.dynmap.modsupport.BlockSide;
 import org.dynmap.modsupport.BlockTextureRecord;
 import org.dynmap.modsupport.TextureFile;
@@ -47,6 +48,10 @@ public class SideUtil {
     }
 
     public SideUtil apply(BlockTextureRecord record, TextureFile file, BlockSide side) {
+        Preconditions.checkNotNull(record, "record");
+        Preconditions.checkNotNull(file, "file");
+        Preconditions.checkNotNull(side, "side");
+
         if (side == BlockSide.ALLFACES) {
             for (int i = DOWN; i < WEST; i++) {
                 record.setPatchTexture(file, i);

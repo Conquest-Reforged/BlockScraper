@@ -3,34 +3,33 @@ buildscript {
         jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
     }
+
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 group 'me.dags'
-version '0.3-SNAPSHOT-mc1.10.2'
+version '0.4-SNAPSHOT-mc1.12.2'
 
 sourceCompatibility = targetCompatibility = "1.8"
 
+minecraft {
+    version = "1.12.2-14.23.2.2611"
+    runDir = "run"
+    mappings = "snapshot_20171003"
+}
+
 repositories {
     mavenCentral()
-    maven { url "https://jitpack.io" }
+    maven { url "http://repo.mikeprimm.com" }
 }
 
 dependencies {
-    compile 'com.github.webbukkit:DynmapCoreAPI:2.3'
+    compile 'us.dynmap:DynmapCoreAPI:3.0-SNAPSHOT'
 }
-
-minecraft {
-    version = "1.10.2-12.18.3.2202"
-    runDir = "run"
-    mappings = "snapshot_20161111"
-}
-
-dependencies {}
 
 processResources {
     inputs.property "version", project.version

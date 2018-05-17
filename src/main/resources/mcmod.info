@@ -1,0 +1,16 @@
+[
+{
+  "modid": "blockscraper",
+  "name": "blockscraper",
+  "description": "A creative-mode block picker and colour wheel",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["dags"],
+  "credits": "Textures by Monsterfish_",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
