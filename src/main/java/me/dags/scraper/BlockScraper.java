@@ -40,9 +40,10 @@ public class BlockScraper {
     public static final String MOD_ID = "blockscraper";
     public static final Logger logger = LogManager.getLogger("BlockScraper");
 
+    private static boolean debug = false;
+
     private File configDir = new File("");
     private boolean scrape = true;
-    private boolean debug = false;
 
     @Mod.EventHandler
     public void init(FMLPreInitializationEvent event) {
