@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * @author dags <dags@dags.me>
  */
-@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.4", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
+@Mod(modid = BlockScraper.MOD_ID, name = "BlockScraper", version = "0.4.1", dependencies = "required-after:dynmap", serverSideOnly = true, acceptableRemoteVersions = "*")
 public class BlockScraper {
 
     public static final String MOD_ID = "blockscraper";
