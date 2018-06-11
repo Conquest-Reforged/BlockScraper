@@ -1,5 +1,18 @@
 package me.dags.scraper;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import me.dags.scraper.asset.AssetManager;
 import me.dags.scraper.asset.AssetPath;
 import me.dags.scraper.asset.blockstate.BlockState;
@@ -14,13 +27,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author dags <dags@dags.me>
@@ -31,17 +40,20 @@ public class BlockScraper {
     public static final String MOD_ID = "blockscraper";
     public static final Logger logger = LogManager.getLogger("BlockScraper");
 
-    private static File configFile = new File("");
-    private static boolean scrape = true;
-    private static boolean debug = false;
+    private File configDir = new File("");
+    private boolean scrape = true;
+    private boolean debug = false;
 
     @Mod.EventHandler
     public void init(FMLPreInitializationEvent event) {
-        configFile = new File(event.getModConfigurationDirectory(), "blockscraper.json");
+        configDir = new File(event.getModConfigurationDirectory(), "blockscraper");
+        configDir.mkdirs();
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+        File configFile = new File(configDir, "config.json");
+
         Collection<String> mods = Config.findBlockProvidingMods();
         logger.info("Detected {} block providing mods", mods.size());
 
@@ -61,12 +73,46 @@ public class BlockScraper {
 
     @Mod.EventHandler
     public void serverStart(FMLServerAboutToStartEvent event) {
-        if (!scrape) {
+        File mcDir = Loader.instance().getConfigDir().getParentFile();
+
+        if (scrape) {
+            scrape(mcDir);
+        } else {
+            restore(mcDir);
+        }
+    }
+
+    @Mod.EventHandler
+    public void serverStarted(FMLServerStartedEvent event) {
+        File mcDir = Loader.instance().getConfigDir().getParentFile();
+
+        if (scrape) {
+            backup(mcDir);
+        }
+    }
+
+    private void restore(File mcDir) {
+        File backups = new File(configDir, "backups");
+        if (!backups.exists()) {
+            logger.info("No backup render data detected");
             return;
         }
 
-        File mcDir = Loader.instance().getConfigDir().getParentFile();
+        File[] files = backups.listFiles();
+        if (files == null) {
+            logger.info("No backup render data detected");
+            return;
+        }
 
+        logger.info("Restoring mod render data from backup");
+        Path modsupport = mcDir.toPath().resolve("dynmap").resolve("renderdata").resolve("modsupport");
+        for (File from : files) {
+            Path to = modsupport.resolve(from.getName());
+            copy(from.toPath(), to);
+        }
+    }
+
+    private void scrape(File mcDir) {
         // Tell ModelRegistrar where to extract textures to. Must happen before registering blocks
         ModelRegistrar.getInstance().setMCDir(mcDir);
 
@@ -84,6 +130,36 @@ public class BlockScraper {
 
         // Clear cached ModTextureDefinition and TextureFile references
         ModelRegistrar.getInstance().clear();
+    }
+
+    private void backup(File mcDir) {
+        File modsupport = mcDir.toPath().resolve("dynmap").resolve("renderdata").resolve("modsupport").toFile();
+        if (!modsupport.exists()) {
+            logger.info("No dynmap render data detected");
+            return;
+        }
+
+        File[] files = modsupport.listFiles();
+        if (files == null) {
+            logger.info("No dynmap render data detected");
+            return;
+        }
+
+        logger.info("Backing up mod render data");
+        Path backups = configDir.toPath().resolve("backups");
+        for (File from : files) {
+            Path to = backups.resolve(from.getName());
+            copy(from.toPath(), to);
+        }
+    }
+
+    private static void copy(Path from, Path to) {
+        try {
+            Files.createDirectories(to.getParent());
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void registerBlocks() {
