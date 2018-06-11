@@ -76,11 +76,13 @@ public class BlockScraper {
     public void serverStart(FMLServerAboutToStartEvent event) {
         File mcDir = Loader.instance().getConfigDir().getParentFile();
 
-        if (scrape) {
-            scrape(mcDir);
-        } else {
-            restore(mcDir);
-        }
+        scrape(mcDir);
+
+//        if (scrape) {
+//            scrape(mcDir);
+//        } else {
+//            restore(mcDir);
+//        }
     }
 
     @Mod.EventHandler
